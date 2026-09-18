@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import send_file, Flask, request, jsonify, render_template
 import yt_dlp
 import os
 
@@ -27,9 +27,25 @@ def convert():
         info = ydl.extract_info(url, download=True)
         filename = ydl.prepare_filename(info)
 
-    return jsonify(success=True, filename=filename)
+    filename = os.path.basename(filename)
+
+    return jsonify(
+        success=True,
+        filename=filename,
+        download_url=f"https://youtubeutility-production.up.railway.app/download/{filename}"
+    )
+
+
+    @app.route("/download/<path:filename>", methods=["GET"])
+    def download(filename):
+        file_path = os.path.join(OUTPUT_DIR, filename)
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True)
+        else:
+            return jsonify(success=False, error="File not found"), 404
 
 if __name__ == "__main__":
     #app.run(debug=True)
     app.run(host="0.0.0.0", port=8080)
+
 

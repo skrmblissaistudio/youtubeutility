@@ -34,6 +34,7 @@
                 const data = await res.json();
                 if (data.success) {
                     status.textContent = `Done: ${data.filename}`;
+                    status.innerHTML = `Done: ${data.filename}<br><a href="${data.download_url}" download>Download MP3</a>`;
                 } else {
                     status.textContent = `Error: ${data.error}`;
                 }
