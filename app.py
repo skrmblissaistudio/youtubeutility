@@ -1,11 +1,17 @@
 from flask import send_file, Flask, request, jsonify, render_template
 import yt_dlp
 import os
+import re
 
 app = Flask(__name__)
 
 OUTPUT_DIR = r"C:\Users\smrit\Documents\Sim\Repo\youtubetomp3"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
+def clean_filename(name):
+    name = re.sub(r'[^\w\-_\. ]', '_', name)
+    return name
 
 @app.route("/")
 def home():
@@ -23,9 +29,16 @@ def convert():
         "outtmpl": os.path.join(OUTPUT_DIR, "%(title)s.%(ext)s"),
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info)
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            raw_filename = ydl.prepare_filename(info)
+            filename = clean_filename(os.path.basename(raw_filename))
+            safe_path = os.path.join(OUTPUT_DIR, filename)
+            os.rename(raw_filename, safe_path)
+            print("Trying to send:", safe_path)
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
 
     filename = os.path.basename(filename)
 
